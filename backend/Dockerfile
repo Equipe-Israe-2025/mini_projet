@@ -1,16 +1,17 @@
-FROM node:latest
+FROM node:18 
 
 WORKDIR /app
 
 COPY package*.json ./
+
+# ci signifie clean install et --quiet réduit les messages logs qui n'ont aucune utilité
 RUN npm ci --quiet 
-#npm clean install avec --quiet qui réduit les messages logs 
 
-
-COPY . .
+COPY . . 
 
 EXPOSE 3000
 
+# change l'utilisateur en non-root, avec moins de privilèges.
 USER node
 
-CMD ["node", "app.js"]
+CMD [ "node","app.js" ]
