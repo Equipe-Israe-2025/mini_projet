@@ -1,28 +1,29 @@
-# syntax=docker/dockerfile:1
-FROM --platform=$BUILDPLATFORM node:18-alpine AS client-builder
+# Étape 1 : Construire l'application Vue.js
+FROM node:18 AS build-stage
+
+# Définir le répertoire de travail
 WORKDIR /app
 
-#copier les fichier de dependances pour optimiser le mise en cache
-COPY package.json package-lock.json ./
-RUN npm ci
+# Copier les fichiers package.json et package-lock.json
+COPY package*.json ./
 
-#copier le reste du code 
+# Installer les dépendances
+RUN npm install
+
+# Copier le reste des fichiers du projet
 COPY . .
 
-#construire l'application vue.js
+# Construire l'application pour la production
 RUN npm run build
 
-#Etape de production avec un serveur web léger
-FROM nginx:alpine
-WORKDIR /usr/share/nginx/html
+# Étape 2 : Servir l'application avec un serveur web
+FROM nginx:stable-alpine AS production-stage
 
-#copier les fichier de build depuis l'étape précédente
-COPY --from=client-builder /app/dist .
+# Copier les fichiers construits depuis l'étape précédente
+COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-#Exposer la porte 80
+# Exposer le port 80
 EXPOSE 80
 
-#démarer Nginx
+# Commande par défaut pour démarrer Nginx
 CMD ["nginx", "-g", "daemon off;"]
-
-
